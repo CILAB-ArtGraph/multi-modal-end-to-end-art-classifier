@@ -13,11 +13,12 @@ class ArtGraph(InMemoryDataset):
     url = "http://bicytour.altervista.org/artgraphv2/transductive/artgraphv2_transductive.zip" #to be moved
 
     def __init__(self, root, preprocess='one-hot', transform=None,
-                 pre_transform=None, features= 'vit', fine_tuning = True):
+                 pre_transform=None, features= 'vit', fine_tuning = True, labels = False):
         preprocess = None if preprocess is None else preprocess.lower()
         self.preprocess = preprocess
         self.features = features.lower() if features is not None else None
         self.fine_tuning = fine_tuning
+        self.labels = labels
         
         assert self.preprocess in [None, 'constant', 'one-hot']
         assert self.features in [None, 'resnet50', 'vit']
@@ -46,6 +47,7 @@ class ArtGraph(InMemoryDataset):
         return 'none.pt'
     
     def download(self):
+        return 
         if not all([os.path.exists(f) for f in self.raw_paths[:5]]):
             path = download_url(self.url, self.root)
             extract_zip(path, self.root)
@@ -90,7 +92,18 @@ class ArtGraph(InMemoryDataset):
             if obj == 'training':
                 obj = 'training_node'
             data[(sub, verb, obj)].edge_index = edge_index    
-            
+
+
+        if self.labels:
+            style_labels = pd.read_csv(f'{self.root}/raw/node-label/artwork/node-label-style.csv', header=None, index_col=None)
+            data['artwork'].y_style = torch.from_numpy(style_labels[0].values)
+
+            genre_labels = pd.read_csv(f'{self.root}/raw/node-label/artwork/node-label-genre.csv', header=None, index_col=None)
+            data['artwork'].y_genre = torch.from_numpy(genre_labels[0].values)
+
+            emotion_labels = pd.read_csv(f'{self.root}/raw/node-label/artwork/node-label-emotion.csv', header=None, index_col=None)
+            data['artwork'].y_emotion = torch.from_numpy(emotion_labels[0].values)
+
         if self.pre_transform is not None:
             data = self.pre_transform(data)
         
