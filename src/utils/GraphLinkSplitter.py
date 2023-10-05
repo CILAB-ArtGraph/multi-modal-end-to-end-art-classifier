@@ -108,20 +108,32 @@ class GraphLinkSplitter():
         X, y = index[0], index[1]#splitting information in artworks and styles
         if len(set(X)) != len(X):
             return self._get_partitions(data)
-        y = OneHotEncoder(sparse = False).fit_transform(y.reshape(-1,1))#making one hot encoding to stratify the splitting
+        y = OneHotEncoder(sparse = False).fit_transform(y.reshape(-1, 1))#making one hot encoding to stratify the splitting
         #split artworks in train and test set
-        
-        X_train, X_drop, y_train, y_drop = train_test_split(X, y,
-                                                          test_size = self.test_size + self.val_size,
-                                                          train_size = 1 - (self.test_size + self.val_size),
-                                                          random_state = self.seed,
-                                                          stratify = y)
-        
-        X_val, X_test, y_val, y_test = train_test_split(X_drop, y_drop,
+        try:
+            X_train, X_drop, y_train, y_drop = train_test_split(X, y,
+                                                              test_size = self.test_size + self.val_size,
+                                                              train_size = 1 - (self.test_size + self.val_size),
+                                                              random_state = self.seed,
+                                                              stratify = y)
+        except:
+            X_train, X_drop, y_train, y_drop = train_test_split(X, y,
+                                                                test_size=self.test_size + self.val_size,
+                                                                train_size=1 - (self.test_size + self.val_size),
+                                                                random_state=self.seed,
+                                                                stratify=None)
+        try:
+            X_val, X_test, y_val, y_test = train_test_split(X_drop, y_drop,
                                                        test_size = self.test_size / (self.test_size + self.val_size),
                                                        train_size = self.val_size / (self.test_size + self.val_size),
                                                        random_state = self.seed,
                                                        stratify = y_drop)
+        except:
+            X_val, X_test, y_val, y_test = train_test_split(X_drop, y_drop,
+                                                            test_size=self.test_size / (self.test_size + self.val_size),
+                                                            train_size=self.val_size / (self.test_size + self.val_size),
+                                                            random_state=self.seed,
+                                                            stratify=None)
                                                             
         return X_train, X_val, X_test
     
